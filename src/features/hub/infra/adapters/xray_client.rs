@@ -48,7 +48,7 @@ impl XrayCommander for XrayClient {
         // 1. Construct VLESS Account
         let account = Account {
             id: uuid.to_string(),
-            flow: String::new(),
+            flow: "xtls-rprx-vision".to_string(),
             encryption: String::new(),
         };
         let mut account_bytes = Vec::new();
