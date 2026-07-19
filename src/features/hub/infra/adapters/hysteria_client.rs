@@ -3,6 +3,7 @@ use async_trait::async_trait;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use tracing::warn;
 
 pub struct HysteriaClient {
     api_url: String,
@@ -37,13 +38,19 @@ impl HysteriaCommander for HysteriaClient {
             auth: uuid.to_string(),
         };
 
-        let resp = self
+        let resp = match self
             .http_client
             .post(&url)
             .json(&payload)
             .send()
             .await
-            .map_err(|e| format!("Hysteria API post error: {}", e))?;
+        {
+            Ok(r) => r,
+            Err(e) => {
+                warn!("Hysteria2 API is offline or unreachable: {}. Skipping Hysteria user addition.", e);
+                return Ok(());
+            }
+        };
 
         if !resp.status().is_success() {
             let status = resp.status();
@@ -63,13 +70,19 @@ impl HysteriaCommander for HysteriaClient {
             auth: uuid.to_string(),
         };
 
-        let resp = self
+        let resp = match self
             .http_client
             .delete(&url)
             .json(&payload)
             .send()
             .await
-            .map_err(|e| format!("Hysteria API delete error: {}", e))?;
+        {
+            Ok(r) => r,
+            Err(e) => {
+                warn!("Hysteria2 API is offline or unreachable: {}. Skipping Hysteria user removal.", e);
+                return Ok(());
+            }
+        };
 
         if !resp.status().is_success() {
             let status = resp.status();
@@ -91,12 +104,18 @@ impl HysteriaCommander for HysteriaClient {
 
     async fn get_traffic_stats(&self) -> Result<HashMap<String, u64>, String> {
         let url = format!("{}/v1/stats", self.api_url);
-        let resp = self
+        let resp = match self
             .http_client
             .get(&url)
             .send()
             .await
-            .map_err(|e| format!("Hysteria API stats error: {}", e))?;
+        {
+            Ok(r) => r,
+            Err(e) => {
+                warn!("Hysteria2 API is offline or unreachable: {}. Skipping Hysteria traffic stats collection.", e);
+                return Ok(HashMap::new());
+            }
+        };
 
         if !resp.status().is_success() {
             return Err(format!("Hysteria rejected stats: status {}", resp.status()));
