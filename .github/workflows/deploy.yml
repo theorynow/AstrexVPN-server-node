@@ -1,0 +1,126 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/app
+          tags: |
+            type=sha,format=short
+
+      - name: Build and push x86_64 image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build
+    runs-on: [self-hosted, hackclub-personal]
+    environment: production
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare deploy directory
+        run: |
+          mkdir -p /home/deployer/node
+          test -f docker-compose.yml
+
+      - name: Sync deploy files
+        run: |
+          cp docker-compose.yml /home/deployer/node/docker-compose.yml
+
+      - name: Debug deploy directory
+        run: |
+          ls -la /home/deployer/node
+          test -f /home/deployer/node/docker-compose.yml
+
+      - name: Lowercase image name
+        run: |
+          echo "APP_IMAGE_NAME_LOWER=ghcr.io/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/app" >> $GITHUB_ENV
+
+      - name: Write production .env
+        working-directory: /home/deployer/node
+        env:
+          HUB_URL: ${{ secrets.HUB_URL }}
+          NODE_ID: ${{ secrets.NODE_ID }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          PUBLIC_IP: ${{ secrets.PUBLIC_IP }}
+          XRAY_GRPC_URL: ${{ secrets.XRAY_GRPC_URL }}
+          HYSTERIA_API_URL: ${{ secrets.HYSTERIA_API_URL }}
+          INBOUND_TAGS: ${{ secrets.INBOUND_TAGS }}
+          APP_IMAGE_NAME: ${{ env.APP_IMAGE_NAME_LOWER }}
+          RUST_LOG: ${{ vars.RUST_LOG || 'info' }}
+        run: |
+          # Verification of Required Secrets
+          : "${HUB_URL:?HUB_URL secret is required}"
+          : "${NODE_ID:?NODE_ID secret is required}"
+          : "${AUTH_SECRET:?AUTH_SECRET secret is required}"
+          : "${PUBLIC_IP:?PUBLIC_IP secret is required}"
+
+          SHORT_SHA="$(echo "$GITHUB_SHA" | cut -c1-7)"
+
+          # Writing to a file
+          cat > .env <<EOF
+          APP_IMAGE_NAME=${APP_IMAGE_NAME}
+          APP_IMAGE_TAG=sha-${SHORT_SHA}
+
+          HUB_URL=${HUB_URL}
+          NODE_ID=${NODE_ID}
+          AUTH_SECRET=${AUTH_SECRET}
+          PUBLIC_IP=${PUBLIC_IP}
+          XRAY_GRPC_URL=${XRAY_GRPC_URL:-http://127.0.0.1:10085}
+          HYSTERIA_API_URL=${HYSTERIA_API_URL:-http://127.0.0.1:10086}
+          INBOUND_TAGS=${INBOUND_TAGS:-vless-reality-in}
+          RUST_LOG=${RUST_LOG}
+          EOF
+
+          chmod 600 .env
+
+      - name: Login to GHCR with GITHUB_TOKEN
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Pull new image
+        run: docker compose -f /home/deployer/node/docker-compose.yml pull
+
+      - name: Restart app
+        run: docker compose -f /home/deployer/node/docker-compose.yml up -d
