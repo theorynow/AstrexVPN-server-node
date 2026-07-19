@@ -38,16 +38,13 @@ impl HysteriaCommander for HysteriaClient {
             auth: uuid.to_string(),
         };
 
-        let resp = match self
-            .http_client
-            .post(&url)
-            .json(&payload)
-            .send()
-            .await
-        {
+        let resp = match self.http_client.post(&url).json(&payload).send().await {
             Ok(r) => r,
             Err(e) => {
-                warn!("Hysteria2 API is offline or unreachable: {}. Skipping Hysteria user addition.", e);
+                warn!(
+                    "Hysteria2 API is offline or unreachable: {}. Skipping Hysteria user addition.",
+                    e
+                );
                 return Ok(());
             }
         };
@@ -70,16 +67,13 @@ impl HysteriaCommander for HysteriaClient {
             auth: uuid.to_string(),
         };
 
-        let resp = match self
-            .http_client
-            .delete(&url)
-            .json(&payload)
-            .send()
-            .await
-        {
+        let resp = match self.http_client.delete(&url).json(&payload).send().await {
             Ok(r) => r,
             Err(e) => {
-                warn!("Hysteria2 API is offline or unreachable: {}. Skipping Hysteria user removal.", e);
+                warn!(
+                    "Hysteria2 API is offline or unreachable: {}. Skipping Hysteria user removal.",
+                    e
+                );
                 return Ok(());
             }
         };
@@ -104,12 +98,7 @@ impl HysteriaCommander for HysteriaClient {
 
     async fn get_traffic_stats(&self) -> Result<HashMap<String, u64>, String> {
         let url = format!("{}/v1/stats", self.api_url);
-        let resp = match self
-            .http_client
-            .get(&url)
-            .send()
-            .await
-        {
+        let resp = match self.http_client.get(&url).send().await {
             Ok(r) => r,
             Err(e) => {
                 warn!("Hysteria2 API is offline or unreachable: {}. Skipping Hysteria traffic stats collection.", e);

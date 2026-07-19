@@ -114,12 +114,25 @@ impl HubClient {
             .map_err(|e| format!("Failed to send Register message: {}", e))?;
 
         // 2. Wait for HubMessage::AuthOk or AuthFailed
-        let auth_response = match ws_receiver.next().await {
-            Some(Ok(Message::Text(text))) => serde_json::from_str::<HubMessage>(&text)
-                .map_err(|e| format!("Failed to parse auth response: {}", e))?,
-            Some(Ok(_)) => return Err("Received non-text message during auth".to_string()),
-            Some(Err(e)) => return Err(format!("Error reading auth response: {}", e)),
-            None => return Err("Connection closed during auth".to_string()),
+        let auth_response = loop {
+            match ws_receiver.next().await {
+                Some(Ok(Message::Text(text))) => match serde_json::from_str::<HubMessage>(&text) {
+                    Ok(resp) => break resp,
+                    Err(e) => return Err(format!("Failed to parse auth response: {}", e)),
+                },
+                Some(Ok(Message::Ping(ping))) => {
+                    let _ = ws_sender.send(Message::Pong(ping)).await;
+                }
+                Some(Ok(Message::Pong(_))) => {}
+                Some(Ok(Message::Close(reason))) => {
+                    return Err(format!("Connection closed during auth: {:?}", reason));
+                }
+                Some(Ok(_)) => {
+                    // Ignore binary or other frames, keep waiting for the Auth response
+                }
+                Some(Err(e)) => return Err(format!("Error reading auth response: {}", e)),
+                None => return Err("Connection closed during auth".to_string()),
+            }
         };
 
         match auth_response {
