@@ -62,24 +62,24 @@ jobs:
 
       - name: Prepare deploy directory
         run: |
-          mkdir -p /home/deployer/node
+          mkdir -p /home/skyfly/node
           test -f docker-compose.yml
 
       - name: Sync deploy files
         run: |
-          cp docker-compose.yml /home/deployer/node/docker-compose.yml
+          cp docker-compose.yml /home/skyfly/node/docker-compose.yml
 
       - name: Debug deploy directory
         run: |
-          ls -la /home/deployer/node
-          test -f /home/deployer/node/docker-compose.yml
+          ls -la /home/skyfly/node
+          test -f /home/skyfly/node/docker-compose.yml
 
       - name: Lowercase image name
         run: |
           echo "APP_IMAGE_NAME_LOWER=ghcr.io/$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')/app" >> $GITHUB_ENV
 
       - name: Write production .env
-        working-directory: /home/deployer/node
+        working-directory: /home/skyfly/node
         env:
           HUB_URL: ${{ secrets.HUB_URL }}
           NODE_ID: ${{ secrets.NODE_ID }}
@@ -120,7 +120,7 @@ jobs:
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       - name: Pull new image
-        run: docker compose -f /home/deployer/node/docker-compose.yml pull
+        run: docker compose -f /home/skyfly/node/docker-compose.yml pull
 
       - name: Restart app
-        run: docker compose -f /home/deployer/node/docker-compose.yml up -d
+        run: docker compose -f /home/skyfly/node/docker-compose.yml up -d
