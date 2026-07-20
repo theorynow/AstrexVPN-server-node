@@ -131,17 +131,24 @@ impl HysteriaCommander for HysteriaClient {
     }
 
     async fn get_traffic_stats(&self) -> Result<HashMap<String, u64>, String> {
-        let url = format!("{}/v1/stats", self.api_url);
+        let url = format!("{}/traffic", self.api_url.trim_end_matches('/'));
         let resp = match self.http_client.get(&url).send().await {
             Ok(r) => r,
             Err(e) => {
-                warn!("Hysteria2 API is offline or unreachable: {}. Skipping Hysteria traffic stats collection.", e);
+                warn!(
+                    "Hysteria2 API is offline or unreachable on {}: {}. Skipping Hysteria traffic stats collection.",
+                    url, e
+                );
                 return Ok(HashMap::new());
             }
         };
 
         if !resp.status().is_success() {
-            return Err(format!("Hysteria rejected stats: status {}", resp.status()));
+            warn!(
+                "Hysteria2 /traffic returned status {}, skipping Hysteria traffic stats collection.",
+                resp.status()
+            );
+            return Ok(HashMap::new());
         }
 
         let body: serde_json::Value = resp
@@ -151,12 +158,7 @@ impl HysteriaCommander for HysteriaClient {
 
         let mut user_bytes = HashMap::new();
 
-        if let Some(traffic) = body
-            .get("traffic")
-            .or_else(|| body.get("trafficStats"))
-            .or_else(|| body.get("stats"))
-            .and_then(|t| t.as_object())
-        {
+        if let Some(traffic) = body.get("traffic").and_then(|t| t.as_object()) {
             for (auth, stats_val) in traffic {
                 let tx = stats_val.get("tx").and_then(|v| v.as_u64()).unwrap_or(0);
                 let rx = stats_val.get("rx").and_then(|v| v.as_u64()).unwrap_or(0);
@@ -164,7 +166,7 @@ impl HysteriaCommander for HysteriaClient {
             }
         } else if let Some(obj) = body.as_object() {
             for (auth, stats_val) in obj {
-                if auth == "traffic" || auth == "trafficStats" || auth == "stats" {
+                if auth == "traffic" {
                     continue;
                 }
                 if let Some(tx) = stats_val.get("tx").and_then(|v| v.as_u64()) {
@@ -197,19 +199,11 @@ impl HysteriaCommander for HysteriaClient {
     }
 
     async fn ping(&self) -> bool {
-        let url = format!("{}/v1/stats", self.api_url);
-        if let Ok(resp) = self.http_client.get(&url).send().await {
-            if resp.status().is_success() {
-                return true;
-            }
+        let url = format!("{}/traffic", self.api_url.trim_end_matches('/'));
+        match self.http_client.get(&url).send().await {
+            Ok(resp) => resp.status().is_success(),
+            Err(_) => false,
         }
-        let url2 = format!("{}/stats", self.api_url);
-        if let Ok(resp) = self.http_client.get(&url2).send().await {
-            if resp.status().is_success() {
-                return true;
-            }
-        }
-        false
     }
 }
 
