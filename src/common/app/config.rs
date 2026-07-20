@@ -10,6 +10,7 @@ pub struct Config {
     pub public_ip: String,
     pub xray_grpc_url: String,
     pub hysteria_api_url: String,
+    pub hysteria_auth_addr: String,
     pub inbound_tags: Vec<String>,
 }
 
@@ -31,6 +32,9 @@ impl Config {
             .filter(|s| !s.is_empty())
             .collect();
 
+        let hysteria_auth_addr =
+            env::var("HYSTERIA_AUTH_ADDR").unwrap_or_else(|_| "0.0.0.0:8080".to_string());
+
         let config = Self {
             hub_url: required_env("HUB_URL")?,
             node_id: required_env("NODE_ID")?,
@@ -39,6 +43,7 @@ impl Config {
             xray_grpc_url: required_env("XRAY_GRPC_URL")?,
             hysteria_api_url: env::var("HYSTERIA_API_URL")
                 .unwrap_or_else(|_| "disabled".to_string()),
+            hysteria_auth_addr,
             inbound_tags,
         };
 
@@ -48,6 +53,7 @@ impl Config {
             public_ip = %config.public_ip,
             xray_grpc_url = %config.xray_grpc_url,
             hysteria_api_url = %config.hysteria_api_url,
+            hysteria_auth_addr = %config.hysteria_auth_addr,
             inbound_tags = ?config.inbound_tags,
             "Node configuration loaded"
         );

@@ -39,7 +39,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             info!("Hysteria2 integration is disabled. Running in Xray-only mode.");
             Arc::new(crate::features::hub::infra::adapters::hysteria_client::NoopHysteriaClient)
         } else {
-            Arc::new(HysteriaClient::new(config.hysteria_api_url.clone()))
+            Arc::new(HysteriaClient::new(
+                config.hysteria_api_url.clone(),
+                config.hysteria_auth_addr.clone(),
+            ))
         };
 
     // 4. Instantiate application logic commands and queries
