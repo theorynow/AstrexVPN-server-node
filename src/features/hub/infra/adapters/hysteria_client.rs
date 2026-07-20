@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use axum::{extract::State, http::StatusCode, routing::post, Json, Router};
 use parking_lot::RwLock;
 use reqwest::Client;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::{info, warn};
@@ -17,15 +17,34 @@ pub struct HysteriaAuthRequest {
     pub addr: String,
 }
 
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
+pub struct HysteriaAuthResponse {
+    pub ok: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+}
+
 pub async fn auth_handler(
     State(users): State<UserMap>,
     Json(payload): Json<HysteriaAuthRequest>,
-) -> StatusCode {
+) -> (StatusCode, Json<HysteriaAuthResponse>) {
     let is_valid = users.read().contains_key(&payload.auth);
     if is_valid {
-        StatusCode::OK
+        (
+            StatusCode::OK,
+            Json(HysteriaAuthResponse {
+                ok: true,
+                id: Some(payload.auth),
+            }),
+        )
     } else {
-        StatusCode::UNAUTHORIZED
+        (
+            StatusCode::UNAUTHORIZED,
+            Json(HysteriaAuthResponse {
+                ok: false,
+                id: None,
+            }),
+        )
     }
 }
 
@@ -238,14 +257,18 @@ mod tests {
             auth: "valid-uuid".to_string(),
             addr: "1.2.3.4:5678".to_string(),
         };
-        let status = auth_handler(State(users.clone()), Json(valid_req)).await;
+        let (status, Json(body)) = auth_handler(State(users.clone()), Json(valid_req)).await;
         assert_eq!(status, StatusCode::OK);
+        assert!(body.ok);
+        assert_eq!(body.id, Some("valid-uuid".to_string()));
 
         let invalid_req = HysteriaAuthRequest {
             auth: "invalid-uuid".to_string(),
             addr: "1.2.3.4:5678".to_string(),
         };
-        let status_invalid = auth_handler(State(users), Json(invalid_req)).await;
+        let (status_invalid, Json(body_invalid)) =
+            auth_handler(State(users), Json(invalid_req)).await;
         assert_eq!(status_invalid, StatusCode::UNAUTHORIZED);
+        assert!(!body_invalid.ok);
     }
 }
