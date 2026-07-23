@@ -20,5 +20,11 @@ services:
       NAME_EN: ${NAME_EN:-Germany}
       NAME_RU: ${NAME_RU:-Германия}
       COUNTRY_FLAG: ${COUNTRY_FLAG:-🇩🇪}
+      XRAY_PORT: ${XRAY_PORT:-443}
+      XRAY_SNI: ${XRAY_SNI:-www.yahoo.com}
+      XRAY_PUBLIC_KEY: ${XRAY_PUBLIC_KEY:-}
+      XRAY_SHORT_ID: ${XRAY_SHORT_ID:-}
+      HYSTERIA_PORT: ${HYSTERIA_PORT:-443}
+      HYSTERIA_SNI: ${HYSTERIA_SNI:-fuckbook.pro}
       INBOUND_TAGS: ${INBOUND_TAGS:-vless-reality-in}
     network_mode: host
