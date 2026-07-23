@@ -86,10 +86,13 @@ impl XrayCommander for XrayClient {
             operation: Some(operation_msg),
         };
 
-        client
-            .alter_inbound(req)
-            .await
-            .map_err(|e| format!("Xray AlterInbound failed: {}", e.message()))?;
+        match client.alter_inbound(req).await {
+            Ok(_) => {}
+            Err(e) if e.message().contains("already exists") => {
+                // User already provisioned in Xray — treat as success (idempotent)
+            }
+            Err(e) => return Err(format!("Xray AlterInbound failed: {}", e.message())),
+        }
 
         Ok(())
     }
