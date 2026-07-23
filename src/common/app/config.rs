@@ -33,7 +33,7 @@ impl Config {
             .collect();
 
         let hysteria_auth_addr =
-            env::var("HYSTERIA_AUTH_ADDR").unwrap_or_else(|_| "0.0.0.0:8080".to_string());
+            env::var("HYSTERIA_AUTH_ADDR").unwrap_or_else(|_| "127.0.0.1:8080".to_string());
 
         let config = Self {
             hub_url: required_env("HUB_URL")?,
