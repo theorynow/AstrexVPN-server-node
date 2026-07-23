@@ -6,7 +6,7 @@ use tokio::time::sleep;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 use tracing::{error, info, warn};
 
-use crate::features::hub::api::dto::{HubMessage, NodeMessage};
+use crate::features::hub::api::dto::{HubMessage, HysteriaConfig, NodeMessage, XrayConfig};
 use crate::features::hub::application::commands::{
     add_user::AddUserCommand, remove_user::RemoveUserCommand, report_traffic::ReportTrafficCommand,
 };
@@ -18,6 +18,11 @@ pub struct HubClient {
     auth_secret: String,
     public_ip: String,
     inbound_tags: Vec<String>,
+    name_en: String,
+    name_ru: String,
+    country_flag: String,
+    xray: Option<XrayConfig>,
+    hysteria: Option<HysteriaConfig>,
     add_user_cmd: Arc<AddUserCommand>,
     remove_user_cmd: Arc<RemoveUserCommand>,
     report_traffic_cmd: Arc<ReportTrafficCommand>,
@@ -32,6 +37,11 @@ impl HubClient {
         auth_secret: String,
         public_ip: String,
         inbound_tags: Vec<String>,
+        name_en: String,
+        name_ru: String,
+        country_flag: String,
+        xray: Option<XrayConfig>,
+        hysteria: Option<HysteriaConfig>,
         add_user_cmd: Arc<AddUserCommand>,
         remove_user_cmd: Arc<RemoveUserCommand>,
         report_traffic_cmd: Arc<ReportTrafficCommand>,
@@ -43,6 +53,11 @@ impl HubClient {
             auth_secret,
             public_ip,
             inbound_tags,
+            name_en,
+            name_ru,
+            country_flag,
+            xray,
+            hysteria,
             add_user_cmd,
             remove_user_cmd,
             report_traffic_cmd,
@@ -103,6 +118,11 @@ impl HubClient {
             auth_secret: self.auth_secret.clone(),
             public_ip: self.public_ip.clone(),
             inbound_tags: self.inbound_tags.clone(),
+            name_en: Some(self.name_en.clone()),
+            name_ru: Some(self.name_ru.clone()),
+            country_flag: Some(self.country_flag.clone()),
+            xray: self.xray.clone(),
+            hysteria: self.hysteria.clone(),
         };
 
         let reg_str = serde_json::to_string(&reg_msg)
@@ -462,6 +482,11 @@ mod tests {
             "secret123".to_string(),
             "127.0.0.1".to_string(),
             vec!["vless-inbound".to_string()],
+            "Germany".to_string(),
+            "Германия".to_string(),
+            "🇩🇪".to_string(),
+            None,
+            None,
             add_user_cmd,
             remove_user_cmd,
             report_traffic_cmd,
@@ -622,6 +647,11 @@ mod tests {
             "secret123".to_string(),
             "127.0.0.1".to_string(),
             vec!["vless-inbound".to_string()],
+            "Germany".to_string(),
+            "Германия".to_string(),
+            "🇩🇪".to_string(),
+            None,
+            None,
             add_user_cmd,
             remove_user_cmd,
             report_traffic_cmd,

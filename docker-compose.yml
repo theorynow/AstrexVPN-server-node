@@ -16,5 +16,9 @@ services:
       PUBLIC_IP: ${PUBLIC_IP}
       XRAY_GRPC_URL: ${XRAY_GRPC_URL:-http://127.0.0.1:10085}
       HYSTERIA_API_URL: ${HYSTERIA_API_URL:-http://127.0.0.1:10086}
+      HYSTERIA_AUTH_ADDR: ${HYSTERIA_AUTH_ADDR:-127.0.0.1:8080}
+      NAME_EN: ${NAME_EN:-Germany}
+      NAME_RU: ${NAME_RU:-Германия}
+      COUNTRY_FLAG: ${COUNTRY_FLAG:-🇩🇪}
       INBOUND_TAGS: ${INBOUND_TAGS:-vless-reality-in}
     network_mode: host

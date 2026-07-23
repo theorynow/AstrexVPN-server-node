@@ -63,6 +63,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         hysteria_client.clone(),
     ));
 
+    let xray_config = Some(crate::features::hub::api::dto::XrayConfig {
+        port: config.xray_port,
+        sni: config.xray_sni,
+        public_key: config.xray_public_key,
+        short_id: config.xray_short_id,
+    });
+
+    let hysteria_config = if config.hysteria_api_url != "disabled" && !config.hysteria_api_url.is_empty() {
+        Some(crate::features::hub::api::dto::HysteriaConfig {
+            port: config.hysteria_port,
+            sni: config.hysteria_sni,
+        })
+    } else {
+        None
+    };
+
     // 5. Instantiate and start Hub WebSocket Client daemon
     let hub_client = HubClient::new(
         config.hub_url,
@@ -70,6 +86,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         config.auth_secret,
         config.public_ip,
         config.inbound_tags,
+        config.name_en,
+        config.name_ru,
+        config.country_flag,
+        xray_config,
+        hysteria_config,
         add_user_cmd,
         remove_user_cmd,
         report_traffic_cmd,

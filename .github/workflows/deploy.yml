@@ -51,7 +51,7 @@ jobs:
   deploy:
     needs: build
     runs-on: [self-hosted, vps-1]
-    environment: production
+    environment: production-serv-1
     permissions:
       contents: read
       packages: read
@@ -85,8 +85,17 @@ jobs:
           NODE_ID: ${{ vars.NODE_ID || 'eu-01' }}
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
           PUBLIC_IP: ${{ vars.PUBLIC_IP || '85.115.209.161' }}
+          NAME_EN: ${{ vars.NAME_EN || 'Germany' }}
+          NAME_RU: ${{ vars.NAME_RU || 'Германия' }}
+          COUNTRY_FLAG: ${{ vars.COUNTRY_FLAG || '🇩🇪' }}
           XRAY_GRPC_URL: ${{ vars.XRAY_GRPC_URL }}
+          XRAY_PORT: ${{ vars.XRAY_PORT || '443' }}
+          XRAY_SNI: ${{ vars.XRAY_SNI || 'www.yahoo.com' }}
+          XRAY_PUBLIC_KEY: ${{ vars.XRAY_PUBLIC_KEY || secrets.XRAY_PUBLIC_KEY }}
+          XRAY_SHORT_ID: ${{ vars.XRAY_SHORT_ID || secrets.XRAY_SHORT_ID }}
           HYSTERIA_API_URL: ${{ vars.HYSTERIA_API_URL || 'http://127.0.0.1:10086' }}
+          HYSTERIA_PORT: ${{ vars.HYSTERIA_PORT || '443' }}
+          HYSTERIA_SNI: ${{ vars.HYSTERIA_SNI || 'fuckbook.pro' }}
           INBOUND_TAGS: ${{ vars.INBOUND_TAGS }}
           APP_IMAGE_NAME: ${{ env.APP_IMAGE_NAME_LOWER }}
           RUST_LOG: ${{ vars.RUST_LOG || 'info,sqlx=debug,tower_http=info,axum::rejection=trace,opentelemetry=info' }}
@@ -105,8 +114,17 @@ jobs:
           NODE_ID=${NODE_ID}
           AUTH_SECRET=${AUTH_SECRET}
           PUBLIC_IP=${PUBLIC_IP}
+          NAME_EN=${NAME_EN}
+          NAME_RU=${NAME_RU}
+          COUNTRY_FLAG=${COUNTRY_FLAG}
           XRAY_GRPC_URL=${XRAY_GRPC_URL:-http://127.0.0.1:10085}
+          XRAY_PORT=${XRAY_PORT}
+          XRAY_SNI=${XRAY_SNI}
+          XRAY_PUBLIC_KEY=${XRAY_PUBLIC_KEY}
+          XRAY_SHORT_ID=${XRAY_SHORT_ID}
           HYSTERIA_API_URL=${HYSTERIA_API_URL}
+          HYSTERIA_PORT=${HYSTERIA_PORT}
+          HYSTERIA_SNI=${HYSTERIA_SNI}
           INBOUND_TAGS=${INBOUND_TAGS:-vless-reality-in}
           RUST_LOG=${RUST_LOG}
           EOF
