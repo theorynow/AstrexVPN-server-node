@@ -27,7 +27,9 @@ impl ReportTrafficCommand {
         match self.xray_client.query_user_stats().await {
             Ok(xray_stats) => {
                 for (user, bytes) in xray_stats {
-                    *aggregated.entry(user).or_insert(0) += bytes;
+                    if bytes > 0 {
+                        *aggregated.entry(user).or_insert(0) += bytes;
+                    }
                 }
             }
             Err(e) => {
@@ -39,7 +41,9 @@ impl ReportTrafficCommand {
         match self.hysteria_client.get_traffic_stats().await {
             Ok(hysteria_stats) => {
                 for (user, bytes) in hysteria_stats {
-                    *aggregated.entry(user).or_insert(0) += bytes;
+                    if bytes > 0 {
+                        *aggregated.entry(user).or_insert(0) += bytes;
+                    }
                 }
             }
             Err(e) => {
