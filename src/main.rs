@@ -87,7 +87,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         config.public_ip,
         config.inbound_tags,
         config.name_en,
-        config.name_ru,
+        config.country_code,
         config.country_flag,
         xray_config,
         hysteria_config,

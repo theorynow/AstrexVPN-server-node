@@ -13,7 +13,7 @@ pub struct Config {
     pub hysteria_auth_addr: String,
     pub inbound_tags: Vec<String>,
     pub name_en: String,
-    pub name_ru: String,
+    pub country_code: String,
     pub country_flag: String,
     pub xray_port: u16,
     pub xray_sni: String,
@@ -44,7 +44,7 @@ impl Config {
         let hysteria_auth_addr =
             env::var("HYSTERIA_AUTH_ADDR").unwrap_or_else(|_| "127.0.0.1:8080".to_string());
         let name_en = env::var("NAME_EN").unwrap_or_else(|_| "Germany".to_string());
-        let name_ru = env::var("NAME_RU").unwrap_or_else(|_| "Германия".to_string());
+        let country_code = env::var("COUNTRY_CODE").unwrap_or_else(|_| "DE".to_string());
         let country_flag = env::var("COUNTRY_FLAG").unwrap_or_else(|_| "🇩🇪".to_string());
 
         let xray_port = env::var("XRAY_PORT")
@@ -72,7 +72,7 @@ impl Config {
             hysteria_auth_addr,
             inbound_tags,
             name_en,
-            name_ru,
+            country_code,
             country_flag,
             xray_port,
             xray_sni,
@@ -86,7 +86,7 @@ impl Config {
             hub_url = %config.hub_url,
             node_id = %config.node_id,
             name_en = %config.name_en,
-            name_ru = %config.name_ru,
+            country_code = %config.country_code,
             country_flag = %config.country_flag,
             public_ip = %config.public_ip,
             xray_grpc_url = %config.xray_grpc_url,

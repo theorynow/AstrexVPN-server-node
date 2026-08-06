@@ -26,7 +26,7 @@ pub enum NodeMessage {
         #[serde(default)]
         name_en: Option<String>,
         #[serde(default)]
-        name_ru: Option<String>,
+        country_code: Option<String>,
         #[serde(default)]
         country_flag: Option<String>,
         #[serde(default)]

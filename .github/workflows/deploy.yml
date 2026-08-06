@@ -86,7 +86,7 @@ jobs:
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
           PUBLIC_IP: ${{ vars.PUBLIC_IP || '85.115.209.161' }}
           NAME_EN: ${{ vars.NAME_EN || 'Germany' }}
-          NAME_RU: ${{ vars.NAME_RU || 'Германия' }}
+          COUNTRY_CODE: ${{ vars.COUNTRY_CODE || 'DE' }}
           COUNTRY_FLAG: ${{ vars.COUNTRY_FLAG || '🇩🇪' }}
           XRAY_GRPC_URL: ${{ vars.XRAY_GRPC_URL }}
           XRAY_PORT: ${{ vars.XRAY_PORT || '443' }}
@@ -116,7 +116,7 @@ jobs:
           AUTH_SECRET=${AUTH_SECRET}
           PUBLIC_IP=${PUBLIC_IP}
           NAME_EN=${NAME_EN}
-          NAME_RU=${NAME_RU}
+          COUNTRY_CODE=${COUNTRY_CODE}
           COUNTRY_FLAG=${COUNTRY_FLAG}
           XRAY_GRPC_URL=${XRAY_GRPC_URL:-http://127.0.0.1:10085}
           XRAY_PORT=${XRAY_PORT}
