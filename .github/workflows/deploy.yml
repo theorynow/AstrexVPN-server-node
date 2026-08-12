@@ -50,8 +50,8 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: [self-hosted, vps-1]
-    environment: production-serv-1
+    runs-on: [self-hosted, vps-2]
+    environment: production-serv-2
     permissions:
       contents: read
       packages: read
