@@ -134,26 +134,30 @@ impl HubClient {
             .map_err(|e| format!("Failed to send Register message: {}", e))?;
 
         // 2. Wait for HubMessage::AuthOk or AuthFailed
-        let auth_response = loop {
-            match ws_receiver.next().await {
-                Some(Ok(Message::Text(text))) => match serde_json::from_str::<HubMessage>(&text) {
-                    Ok(resp) => break resp,
-                    Err(e) => return Err(format!("Failed to parse auth response: {}", e)),
-                },
-                Some(Ok(Message::Ping(ping))) => {
-                    let _ = ws_sender.send(Message::Pong(ping)).await;
+        let auth_response = tokio::time::timeout(std::time::Duration::from_secs(10), async {
+            loop {
+                match ws_receiver.next().await {
+                    Some(Ok(Message::Text(text))) => match serde_json::from_str::<HubMessage>(&text) {
+                        Ok(resp) => break Ok(resp),
+                        Err(e) => break Err(format!("Failed to parse auth response: {}", e)),
+                    },
+                    Some(Ok(Message::Ping(ping))) => {
+                        let _ = ws_sender.send(Message::Pong(ping)).await;
+                    }
+                    Some(Ok(Message::Pong(_))) => {}
+                    Some(Ok(Message::Close(reason))) => {
+                        break Err(format!("Connection closed during auth: {:?}", reason));
+                    }
+                    Some(Ok(_)) => {
+                        // Ignore binary or other frames, keep waiting for the Auth response
+                    }
+                    Some(Err(e)) => break Err(format!("Error reading auth response: {}", e)),
+                    None => break Err("Connection closed during auth".to_string()),
                 }
-                Some(Ok(Message::Pong(_))) => {}
-                Some(Ok(Message::Close(reason))) => {
-                    return Err(format!("Connection closed during auth: {:?}", reason));
-                }
-                Some(Ok(_)) => {
-                    // Ignore binary or other frames, keep waiting for the Auth response
-                }
-                Some(Err(e)) => return Err(format!("Error reading auth response: {}", e)),
-                None => return Err("Connection closed during auth".to_string()),
             }
-        };
+        })
+        .await
+        .map_err(|_| "Timeout waiting for auth response".to_string())??;
 
         match auth_response {
             HubMessage::AuthOk => {
